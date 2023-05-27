@@ -1,0 +1,68 @@
+---
+title: "Code for data"
+author: "Boris T-A"
+date: "2023-05-08"
+output: html_document
+---
+
+```{r}
+library(quantmod)
+library(dplyr)
+library(tidyquant)
+library(xts)
+```
+## Sections 1 & 2
+
+## Picking the 15 Assets 
+
+```{r}
+# Should be a nice selection of assets to start with... 
+tickers <- c("AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "BRK-B", "JNJ", "JPM", "V", "PG", "UNH", "MA", "NVDA", "DIS")
+
+```
+
+```{r}
+get_monthly_prices_and_returns <- function(ticker) {
+  prices <- getSymbols(ticker, src = "yahoo", from = "2015-01-01", to = "2021-12-31", auto.assign = FALSE)
+  adjusted_prices <- Ad(prices)
+  monthly_prices <- to.monthly(adjusted_prices, OHLC = FALSE, indexAt = "lastof")
+
+  # Calculate monthly returns
+  returns <- na.omit(periodReturn(monthly_prices, period = "monthly", type = "arithmetic"))
+
+  # Convert to data frame
+  prices_df <- data.frame(date = index(monthly_prices), price = coredata(monthly_prices))
+  colnames(prices_df) <- c("date", paste0(ticker, "_price"))
+
+  returns_df <- data.frame(date = index(returns), return = coredata(returns))
+  colnames(returns_df) <- c("date", paste0(ticker, "_return"))
+
+  return(list(prices = prices_df, returns = returns_df))
+}
+
+```
+
+```{r}
+prices_and_returns_list <- lapply(tickers, get_monthly_prices_and_returns)
+combined_prices <- Reduce(function(x, y) merge(x, y, by = "date", all = TRUE), lapply(prices_and_returns_list, function(x) x$prices))
+combined_returns <- Reduce(function(x, y) merge(x, y, by = "date", all = TRUE), lapply(prices_and_returns_list, function(x) x$returns))
+```
+
+
+```{r}
+head(combined_returns)
+combined_returns <- combined_returns[-1, ]
+head(combined_returns)
+head(combined_prices) # no need to remove first row 
+```
+
+```{r}
+# Convert risk free to monthly from annual 
+risk_free_rate<-rep_len(0.0094/12, length.out = length(combined_returns$date))
+
+final_data <- cbind(combined_returns, risk_free_rate)
+
+head(final_data)
+
+```
+
