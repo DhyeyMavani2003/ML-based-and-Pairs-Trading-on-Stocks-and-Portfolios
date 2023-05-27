@@ -1,6 +1,5 @@
 ---
 title: "SMF_Project"
-author: "Boris T-A"
 date: "2023-04-14"
 output: html_document
 ---
