@@ -1,3 +1,10 @@
+---
+title: "Getting The Data"
+author: "Dhyey Mavani, Boris T-A, Aruna Bidollina"
+date: "2023-05-08"
+output: html_document
+---
+
 ```{r}
 library(quantmod)
 library(dplyr)
